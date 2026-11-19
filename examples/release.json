@@ -1,0 +1,18 @@
+{
+  "base": "0000000000000000000000000000000000000000",
+  "candidate": "1111111111111111111111111111111111111111",
+  "author": "implementer",
+  "scope": [
+    "src/**",
+    "tests/**"
+  ],
+  "checks": {
+    "build": true,
+    "tests": true
+  },
+  "review": {
+    "candidate": "1111111111111111111111111111111111111111",
+    "reviewer": "independent-reviewer",
+    "accepted": true
+  }
+}
