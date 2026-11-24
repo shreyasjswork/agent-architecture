@@ -1,12 +1,54 @@
-flowchart LR
-    REQUEST["User request"] --> SCOPE["Task scope and acceptance checks"]
-    SCOPE --> ROUTE["Shared workflow and project rules"]
-    ROUTE --> ADAPTER["Provider adapter"]
-    ADAPTER --> IMPLEMENT["Implementation and local checks"]
-    IMPLEMENT --> FREEZE["Freeze a candidate Git commit"]
-    FREEZE --> REVIEW["Independent review of that commit"]
-    REVIEW --> DECISION{"Checks and review pass?"}
-    DECISION -->|"Fix"| IMPLEMENT
-    DECISION -->|"Pass"| AUTH["Apply the project publication decision"]
-    AUTH --> LIVE["Verify the merged or deployed result"]
-    LIVE --> HEALTH["Record outcome and review coverage"]
+flowchart TD
+    subgraph INTAKE["1. Task Intake and Scope Isolation"]
+        REQ["User Request"] --> SCOPE["Scope Boundary Definition\n(Allowed Paths, Acceptance Criteria)"]
+        SCOPE --> ISOLATE["Worktree Isolation\n(Dedicated Git Worktree per Feature)"]
+    end
+
+    subgraph T3_ORCHESTRATION["2. T3 Code Orchestration and Routing"]
+        ISOLATE --> ORCH["T3 Code Workstation Coordinator"]
+        ORCH --> CONCURRENCY{"Active Orchestrator Concurrency\n(Max 1 to 2 Concurrent Tasks)"}
+        CONCURRENCY -->|"Queue"| QUEUE["Request Ledger / Task Queue"]
+        CONCURRENCY -->|"Execute"| ROUTE["Skillset and Model Routing"]
+        
+        SKILLS["Skillset Library\n(543 Skills, 87 Core Discoverable)"] -.-> ROUTE
+        
+        ROUTE --> PROVIDERS{"Provider Allocation"}
+        PROVIDERS -->|"Unmetered Routine"| GEMINI["Google Antigravity A1 / A2\n(Gemini 3.8 Flash, Medium Reasoning)"]
+        PROVIDERS -->|"Standard Code"| CODEX["OpenAI / Codex\n(Sol / Terra / Luna, Medium Reasoning)"]
+        PROVIDERS -->|"Architecture"| CLAUDE["Anthropic / Claude\n(Opus / Sonnet 5.5)"]
+        PROVIDERS -->|"Frontier High-Risk"| FRONTIER["Antigravity A3 / A4\n(Neon / Hydrogen) or Sol 6.2 High"]
+    end
+
+    subgraph IMPLEMENTATION["3. Implementation and Pre-Flight Gate"]
+        GEMINI --> WORK["Code Implementation and Local Edits"]
+        CODEX --> WORK
+        CLAUDE --> WORK
+        WORK --> PREFLIGHT{"Deterministic Pre-Flight Gate\n(CLI: test, lint, typecheck, build)"}
+        PREFLIGHT -->|"Fail: Fix Locally"| WORK
+        PREFLIGHT -->|"Pass"| FREEZE["Freeze Candidate Git Commit"]
+    end
+
+    subgraph VERIFICATION["4. Headless Verification and Delegated Review"]
+        FREEZE --> HEADLESS["Enforced Headless Playwright Runner\n(Zero Focus-Stealing Windows)"]
+        HEADLESS --> REVIEW_ROSTER{"Blast-Radius Risk Tier"}
+        
+        REVIEW_ROSTER -->|"Low (Docs, Copy, Small Fixes)"| REV_LOW["1 Round: Unmetered Gemini A1 / A2\n(Zero Paid Sol Draw)"]
+        REVIEW_ROSTER -->|"Medium (Shared UI, API)"| REV_MED["1 to 2 Rounds: Unmetered Gemini +\nStandard Reviewer at Medium Reasoning"]
+        REVIEW_ROSTER -->|"High (Auth, Schema, Security)"| REV_HIGH["1 to 2 Rounds: Frontier Sol 6.2 or\nA3 / A4 Neon / Hydrogen + Gemini"]
+        
+        REV_LOW --> BLIND["Blind Review Audit\n(Diff Snapshot, Criteria, Lens)"]
+        REV_MED --> BLIND
+        REV_HIGH --> BLIND
+        
+        BLIND --> RECONCILE{"Reconciliation Ledger\n(Clean Verdict or Open Issues)"}
+        RECONCILE -->|"Clean Round 1: Early Exit"| PASS["Approved Revision"]
+        RECONCILE -->|"Valid Findings (Max 2 Rounds)"| WORK
+        RECONCILE -->|"Disagreement at Cap (Round 2)"| HUMAN_GATE["Escalate to Human with Ledger"]
+    end
+
+    subgraph RELEASE["5. Release Boundary and Thread Lifecycle"]
+        PASS --> RECEIPT["Generate Verifiable Release Receipt\n(Commit Hashes, Scope, Check Results)"]
+        RECEIPT --> MERGE["Merge or Publish to Base Ref"]
+        MERGE --> SYNC["Remote Parity Verification\n(Sync to Repository Main)"]
+        SYNC --> RETIRE["Task-Bounded Thread Retirement\n(Durable Handoff, Fresh Session)"]
+    end
