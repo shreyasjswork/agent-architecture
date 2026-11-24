@@ -65,3 +65,10 @@ Before merging or publishing:
    - No unauthorized files or secrets leaked into the diff.
    - The reviewer approved the exact commit hash being released.
 3. Once verified, the candidate commit merges into the base branch, and the task-bounded thread is cleanly retired.
+
+## 7. Rebase Review Inheritance (Zero-Token Rebasing)
+
+When an approved branch is rebased onto `dev` or `main` after other PRs have landed:
+1. **Clean Rebase (`git range-diff` = 0 Tokens):** Run `git range-diff <old-approved-sha>...<new-rebased-sha>`. If `range-diff` is empty, the code changes are mathematically identical to what was approved. Zero model review is needed. Local deterministic tests (`test`, `build`) confirm integration; if passing, release immediately.
+2. **Disjoint Files (0 Tokens):** If other merged PRs touched files completely disjoint from the feature branch, the local test suite pass confirms zero regression. Approval inherits automatically with zero model tokens.
+3. **Conflict-Only Delta Review:** If a rebase encounters merge conflicts, review only the conflict resolution delta, never the entire PR. A single unmetered reviewer (Gemini A1) inspects the isolated conflict delta with a lean brief, reducing review cost from 50,000 tokens to under 1,000 tokens.
